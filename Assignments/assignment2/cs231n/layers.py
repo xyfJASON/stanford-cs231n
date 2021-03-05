@@ -531,13 +531,29 @@ def conv_forward_naive(x, w, b, conv_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, C, H, W = x.shape
+    F, C, HH, WW = w.shape
+    stride, pad = conv_param['stride'], conv_param['pad']
+    H_ = int(1 + (H + 2 * pad - HH) / stride)
+    W_ = int(1 + (W + 2 * pad - WW) / stride)
+    padx = np.pad(x, ((0, ), (0, ), (pad, ), (pad, )))
+    out = np.zeros((N, F, H_, W_))
+
+    colx = np.zeros((N, C*HH*WW, H_*W_))
+    for i in range(H_):
+        for j in range(W_):
+            ii, jj = i * stride, j * stride
+            colx[:, :, i*W_+j] = padx[:, :, ii:ii+HH, jj:jj+WW].reshape((N, -1))
+    roww = w.reshape((F, C*HH*WW))
+    rowws = np.array([roww] * N)
+    bs = np.array([b] * N)[:, :, np.newaxis]
+    out = (rowws @ colx + bs).reshape(N, F, H_, W_)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
-    cache = (x, w, b, conv_param)
+    cache = (x, w, b, conv_param, padx, colx, roww, rowws, bs)
     return out, cache
 
 
@@ -560,7 +576,26 @@ def conv_backward_naive(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, w, b, conv_param, padx, colx, roww, rowws, bs = cache
+    N, C, H, W = x.shape
+    F, C, HH, WW = w.shape
+    stride, pad = conv_param['stride'], conv_param['pad']
+    H_ = int(1 + (H + 2 * pad - HH) / stride)
+    W_ = int(1 + (W + 2 * pad - WW) / stride)
+    bs = np.array([b] * N)[:, :, np.newaxis]
+
+    dbs = dout.reshape(N, F, -1)
+    db = dbs.sum(axis=(0, 2))
+    drowws = dout.reshape(N, F, -1) @ colx.transpose(0, 2, 1)
+    drow = drowws.sum(axis=0)
+    dw = drow.reshape(w.shape)
+    dcolx = rowws.transpose(0, 2, 1) @ dout.reshape(N, F, -1)
+    dpadx = np.zeros(padx.shape)
+    for i in range(H_):
+        for j in range(W_):
+            ii, jj = i * stride, j * stride
+            dpadx[:, :, ii:ii+HH, jj:jj+WW] += dcolx[:, :, i*W_+j].reshape((N, C, HH, WW))
+    dx = dpadx[:, :, pad:-pad, pad:-pad]
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -594,7 +629,17 @@ def max_pool_forward_naive(x, pool_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, C, H, W = x.shape
+    HH, WW = pool_param['pool_height'], pool_param['pool_width']
+    stride = pool_param['stride']
+    H_ = int(1 + (H - HH) / stride)
+    W_ = int(1 + (W - WW) / stride)
+    out = np.zeros((N, C, H_, W_))
+
+    for i in range(H_):
+        for j in range(W_):
+            ii, jj = i * stride, j * stride
+            out[:, :, i, j] = x[:, :, ii:ii+HH, jj:jj+WW].max(axis=(2, 3))
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -621,7 +666,19 @@ def max_pool_backward_naive(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, pool_param = cache
+    N, C, H, W = x.shape
+    HH, WW = pool_param['pool_height'], pool_param['pool_width']
+    stride = pool_param['stride']
+    H_ = int(1 + (H - HH) / stride)
+    W_ = int(1 + (W - WW) / stride)
+    dx = np.zeros(x.shape)
+    for i in range(H_):
+        for j in range(W_):
+            ii, jj = i * stride, j * stride
+            tmpx = x[:, :, ii:ii+HH, jj:jj+WW]
+            mask = (tmpx == tmpx.max(axis=(2, 3))[:, :, np.newaxis, np.newaxis])
+            dx[:, :, ii:ii+HH, jj:jj+WW] += mask * (dout[:, :, i, j])[:, :, np.newaxis, np.newaxis]
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -663,7 +720,9 @@ def spatial_batchnorm_forward(x, gamma, beta, bn_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, C, H, W = x.shape
+    out, cache = batchnorm_forward(x.transpose(0, 2, 3, 1).reshape((N*H*W, C)), gamma, beta, bn_param)
+    out = out.reshape((N, H, W, C)).transpose(0, 3, 1, 2)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -697,7 +756,9 @@ def spatial_batchnorm_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, C, H, W = dout.shape
+    dx, dgamma, dbeta = batchnorm_backward(dout.transpose(0, 2, 3, 1).reshape((N*H*W, C)), cache)
+    dx = dx.reshape((N, H, W, C)).transpose(0, 3, 1, 2)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################

@@ -1,2 +1,17 @@
 .DS_Store
 */.DS_Store
+Assignments/assignment3/cs231n/datasets/coco_captioning/coco2014_captions.h5
+Assignments/assignment3/cs231n/datasets/coco_captioning/train2014_images.txt
+Assignments/assignment3/cs231n/datasets/coco_captioning/coco2014_vocab.json
+Assignments/assignment3/cs231n/datasets/coco_captioning/train2014_urls.txt
+.DS_Store
+Assignments/assignment3/cs231n/datasets/coco_captioning/train2014_vgg16_fc7.h5
+Assignments/assignment3/cs231n/datasets/coco_captioning/train2014_vgg16_fc7_pca.h5
+Assignments/assignment3/cs231n/datasets/coco_captioning/val2014_images.txt
+Assignments/assignment3/cs231n/datasets/coco_captioning/val2014_urls.txt
+Assignments/assignment3/cs231n/datasets/coco_captioning/val2014_vgg16_fc7.h5
+Assignments/assignment3/cs231n/datasets/coco_captioning/val2014_vgg16_fc7_pca.h5
+Assignments/assignment3/cs231n/datasets/imagenet_val_25.npz
+Assignments/assignment3/cs231n/datasets/squeezenet_tf2/squeezenet.ckpt.data-00000-of-00001
+Assignments/assignment3/cs231n/datasets/squeezenet_tf2/squeezenet.ckpt.index
+.DS_Store

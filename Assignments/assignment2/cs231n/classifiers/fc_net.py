@@ -209,7 +209,7 @@ class FullyConnectedNet(object):
                 hidden_dims[l-2] if l > 1 else input_dim, \
                 hidden_dims[l-1] if l < self.num_layers else num_classes) * weight_scale
             self.params['b'+str(l)] = np.zeros(hidden_dims[l-1] if l < self.num_layers else num_classes)
-            if normalization == "batchnorm" and l < self.num_layers:
+            if normalization is not None and l < self.num_layers:
                 self.params['gamma'+str(l)] = np.ones(hidden_dims[l-1], dtype=dtype)
                 self.params['beta'+str(l)] = np.zeros(hidden_dims[l-1], dtype=dtype)
 
@@ -287,6 +287,11 @@ class FullyConnectedNet(object):
                     beta = self.params['beta'+str(l)]
                     bn_param = self.bn_params[l-1]
                     scores, caches[l] = affine_bn_relu_forward(scores, W, b, gamma, beta, bn_param)
+                elif self.normalization == "layernorm":
+                    gamma = self.params['gamma'+str(l)]
+                    beta = self.params['beta'+str(l)]
+                    ln_param = self.bn_params[l-1]
+                    scores, caches[l] = affine_ln_relu_forward(scores, W, b, gamma, beta, ln_param)
                 if self.use_dropout:
                     scores, dropout_caches = dropout_forward(scores, self.dropout_param)
                     caches[l] = (caches[l], dropout_caches)
@@ -327,6 +332,10 @@ class FullyConnectedNet(object):
                     dscores, grads['W'+str(l)], grads['b'+str(l)] = affine_relu_backward(dscores, caches[l][0] if self.use_dropout else caches[l])
                 if self.normalization == "batchnorm":
                     dscores, dW, db, dgamma, dbeta = affine_bn_relu_backward(dscores, caches[l][0] if self.use_dropout else caches[l])
+                    grads['W'+str(l)], grads['b'+str(l)] = dW, db
+                    grads['gamma'+str(l)], grads['beta'+str(l)] = dgamma, dbeta
+                if self.normalization == "layernorm":
+                    dscores, dW, db, dgamma, dbeta = affine_ln_relu_backward(dscores, caches[l][0] if self.use_dropout else caches[l])
                     grads['W'+str(l)], grads['b'+str(l)] = dW, db
                     grads['gamma'+str(l)], grads['beta'+str(l)] = dgamma, dbeta
 

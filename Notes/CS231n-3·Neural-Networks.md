@@ -2,7 +2,7 @@
 title: '[CS231n]3·Neural Networks'
 date: 2021-02-24 19:35:10
 tags: 学习笔记
-categories: [计算机视觉]
+categories: [计算机视觉,CS231n]
 cover: /gallery/pexels_woman-book.jpg
 description: Stanford CS231n Convolutional Neural Networks for Visual Recognition
 ---

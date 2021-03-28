@@ -2,7 +2,7 @@
 title: '[CS231n]1·Image Classification'
 date: 2021-02-21 20:26:57
 tags: 学习笔记
-categories: [计算机视觉]
+categories: [计算机视觉,CS231n]
 cover: /gallery/pexels_woman-book.jpg
 description: Stanford CS231n Convolutional Neural Networks for Visual Recognition
 ---

@@ -11,7 +11,7 @@ from .image_utils import SQUEEZENET_MEAN, SQUEEZENET_STD
 dtype = torch.FloatTensor
 # Uncomment out the following line if you're on a machine with a GPU set up for PyTorch!
 #dtype = torch.cuda.FloatTensor
-def content_loss(content_weight, content_current, content_original):
+def content_loss(content_weight, content_current, content_target):
     """
     Compute the content loss for style transfer.
 
@@ -26,7 +26,10 @@ def content_loss(content_weight, content_current, content_original):
     """
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    _, C, H, W = content_current.shape
+    F = content_current.view(C, H * W)
+    P = content_target.view(C, H * W)
+    return content_weight * torch.sum((F - P) ** 2)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -46,7 +49,12 @@ def gram_matrix(features, normalize=True):
     """
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, C, H, W = features.shape
+    F = features.view(N, C, H * W)
+    gram = F @ F.permute(0, 2, 1)
+    if normalize:
+        gram /= C * H * W
+    return gram
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -73,7 +81,11 @@ def style_loss(feats, style_layers, style_targets, style_weights):
     # not be very much code (~5 lines). You will need to use your gram_matrix function.
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    loss = torch.empty(1)
+    for i, l in enumerate(style_layers):
+        A = gram_matrix(feats[l])
+        loss += style_weights[i] * torch.sum((A - style_targets[i]) ** 2)
+    return loss
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -92,7 +104,10 @@ def tv_loss(img, tv_weight):
     # Your implementation should be vectorized and not require any loops!
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    H, W = img.shape[2], img.shape[3]
+    A = img[:, :, 1:, :] - img[:, :, :-1, :]
+    B = img[:, :, :, 1:] - img[:, :, :, :-1]
+    return tv_weight * ((A ** 2).sum() + (B ** 2).sum())
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 def preprocess(img, size=512):
